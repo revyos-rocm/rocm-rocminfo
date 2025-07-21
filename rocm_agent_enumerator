@@ -81,7 +81,7 @@ def staticVars(**kwargs):
     return func
   return deco
 
-@staticVars(search_term=re.compile(r"gfx[0-9a-fA-F]+"))
+@staticVars(search_term=re.compile(r"gfx[0-9a-fA-F]+(-[0-9a-fA-F]+)?(-generic)?"))
 def getGCNISA(line, match_from_beginning = False):
  if match_from_beginning is True:
    result = getGCNISA.search_term.match(line)
@@ -92,7 +92,7 @@ def getGCNISA(line, match_from_beginning = False):
    return result.group(0)
  return None
 
-@staticVars(search_name=re.compile(r"gfx[0-9a-fA-F]+(:[-+:\w]+)?"))
+@staticVars(search_name=re.compile(r"gfx[0-9a-fA-F]+(-[0-9a-fA-F]+)?(-generic)?(:[-+:\w]+)?"))
 def getGCNArchName(line):
  result = getGCNArchName.search_name.search(line)
 
@@ -270,10 +270,6 @@ def main():
 
     if len(target_list) == 0:
       target_list = readFromROCMINFO()
-
-    # workaround to cope with existing rocm_agent_enumerator behavior where gfx000
-    # would always be returned
-    print("gfx000")
 
   for gfx in target_list:
     print(gfx)

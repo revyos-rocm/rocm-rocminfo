@@ -56,13 +56,8 @@
 #include <string>
 #include <sstream>
 
-#include <memory>
-#include <array>
-
 #include "hsa/hsa.h"
 #include "hsa/hsa_ext_amd.h"
-
-using namespace std;
 
 #define COL_BLU  "\x1B[34m"
 #define COL_KCYN  "\x1B[36m"
@@ -101,7 +96,9 @@ struct system_info_t {
     hsa_endianness_t endianness;
     hsa_machine_model_t machine_model;
     bool mwaitx_enabled;
+    bool xnack_enabled;
     bool dmabuf_support;
+    bool vmm_support;
 };
 
 // This structure holds agent information acquired through hsa info related
@@ -231,31 +228,12 @@ std::string int_to_string(uint32_t i,
   return sd.str();
 }
 
-pair<string, int> exec(const char* cmd) {
-  array<char, 128> buffer;
-  string result;
-  int return_code = -1;
-  auto pclose_wrapper = [&return_code](FILE* cmd){ return_code = pclose(cmd); };
-  { // scope is important, have to make sure the ptr goes out of scope first
-    const unique_ptr<FILE, decltype(pclose_wrapper)> pipe(popen(cmd, "r"), pclose_wrapper);
-    if (pipe) {
-      while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-      }
-    }
-  }
-  return make_pair(result, return_code);
-}
-
 static void DetectWSLEnvironment() {
-  auto process_ret = exec("which wslinfo > /dev/null 2>&1");
-  if (process_ret.second)
-    return;
-
-  process_ret = exec("wslinfo --msal-proxy-path");
-  if (process_ret.second == 0 &&
-      strcasestr(process_ret.first.c_str(), "msal.wsl.proxy.exe") != nullptr) {
+  const char *filePath = "/dev/dxg";
+  FILE *file = fopen(filePath, "r");
+  if (file) {
     printf("WSL environment detected.\n");
+    fclose(file);
     wsl_env = true;
   }
 }
@@ -331,9 +309,20 @@ static hsa_status_t AcquireSystemInfo(system_info_t *sys_info) {
   err = hsa_system_get_info(HSA_AMD_SYSTEM_INFO_MWAITX_ENABLED,
                                                      &sys_info->mwaitx_enabled);
   RET_IF_HSA_ERR(err);
+
   // Get DMABuf support
   err = hsa_system_get_info(HSA_AMD_SYSTEM_INFO_DMABUF_SUPPORTED,
                                                      &sys_info->dmabuf_support);
+  RET_IF_HSA_ERR(err);
+
+  // Get Xnack Enabled
+  err = hsa_system_get_info(HSA_AMD_SYSTEM_INFO_XNACK_ENABLED,
+                                                     &sys_info->xnack_enabled);
+  RET_IF_HSA_ERR(err);
+
+  // Get VMM supported
+  err = hsa_system_get_info(HSA_AMD_SYSTEM_INFO_VIRTUAL_MEM_API_SUPPORTED,
+                                                     &sys_info->vmm_support);
   RET_IF_HSA_ERR(err);
 
   return err;
@@ -367,8 +356,14 @@ static void DisplaySystemInfo(system_info_t const *sys_info) {
   printLabel("Mwaitx:");
   printf("%s\n", sys_info->mwaitx_enabled ? "ENABLED" : "DISABLED");
 
+  printLabel("XNACK enabled:");
+  printf("%s\n", sys_info->xnack_enabled ? "YES" : "NO");
+
   printLabel("DMAbuf Support:");
   printf("%s\n", sys_info->dmabuf_support ? "YES" : "NO");
+
+  printLabel("VMM Support:");
+  printf("%s\n", sys_info->vmm_support ? "YES" : "NO");
 
   printf("\n");
 }
@@ -1201,9 +1196,14 @@ int CheckInitialState(void) {
       return -1;
     }
   } else {
-    printf("%sROCk module is NOT loaded, possibly no GPU devices%s\n",
-                                                          COL_RED, COL_RESET);
-    return -1;
+    int module_dir;
+    module_dir = open("/sys/module/amdgpu", O_DIRECTORY);
+    if (module_dir < 0) {
+      printf("%sROCk module is NOT loaded, possibly no GPU devices%s\n",
+                                                            COL_RED, COL_RESET);
+      return -1;
+    }
+    close(module_dir);
   }
 
   // Check if user belongs to the group for /dev/kfd (e.g. "video" or
