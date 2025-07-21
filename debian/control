@@ -13,8 +13,8 @@ Build-Depends:
  rocm-hsa-dev,
 Standards-Version: 4.7.0
 Homepage: https://github.com/ROCm/rocminfo
-Vcs-Browser: https://github.com/r-rocm/rocm-rocminfo
-Vcs-Git: https://github.com/r-rocm/rocm-rocminfo.git
+Vcs-Browser: https://github.com/revyos-rocm/rocm-rocminfo
+Vcs-Git: https://github.com/revyos-rocm/rocm-rocminfo.git
 
 Package: rocm-rocminfo
 Architecture: any
