@@ -10,7 +10,7 @@ Build-Depends:
  rocm-core,
  rocm-env,
  rocm-cmake,
- rocm-hsa-dev,
+ rocm-rocr-dev,
 Standards-Version: 4.7.0
 Homepage: https://github.com/ROCm/rocminfo
 Vcs-Browser: https://github.com/revyos-rocm/rocm-rocminfo
@@ -23,6 +23,6 @@ Depends:
  ${misc:Depends},
  rocm-core,
  rocm-env,
- rocm-hsa,
+ rocm-rocr,
 Description: ROCm Application for Reporting System Info
  ROCm Application for Reporting System Info
