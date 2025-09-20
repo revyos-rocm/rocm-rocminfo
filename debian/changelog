@@ -1,3 +1,9 @@
+rocm-rocminfo (7.0.1-1) trixie; urgency=medium
+
+  * Release 7.0.1-1
+
+ -- CHEN Xuan <chenxuan@iscas.ac.cn>  Sat, 20 Sep 2025 18:16:05 +0800
+
 rocm-rocminfo (6.4.3-1) trixie; urgency=medium
 
   * Release 6.4.3-1

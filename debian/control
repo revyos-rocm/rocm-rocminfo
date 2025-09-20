@@ -10,7 +10,7 @@ Build-Depends:
  rocm-core,
  rocm-env,
  rocm-cmake,
- rocm-llvm,
+ rocm-llvm (>= 7.0.0) (>= 7.0.0),
  rocm-rocr-dev,
 Standards-Version: 4.7.0
 Homepage: https://github.com/ROCm/rocminfo
